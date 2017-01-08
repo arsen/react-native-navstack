@@ -1,0 +1,33 @@
+{
+  "name": "react-native-navstack",
+  "version": "0.0.1",
+  "description": "React Native navigation library based on native animations",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arsenghazaryan/react-native-navstack.git"
+  },
+  "keywords": [
+    "react-native",
+    "native",
+    "animations",
+    "native",
+    "navigation",
+    "router"
+  ],
+  "author": "= <=>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/arsenghazaryan/react-native-navstack/issues"
+  },
+  "homepage": "https://github.com/arsenghazaryan/react-native-navstack#readme",
+  "devDependencies": {
+    "react": "^15.4.1"
+  },
+  "dependencies": {
+    "events": "^1.1.1"
+  }
+}

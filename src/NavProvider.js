@@ -11,6 +11,8 @@ import NavEvents from './NavEvents';
 import NavScreen from './NavScreen';
 import NavScreenTransitions from './transitions';
 
+
+
 export default class NavProvider extends Component {
   constructor(props) {
     super(props);
@@ -22,21 +24,26 @@ export default class NavProvider extends Component {
       history: [],
       stage: '',
     };
+    this.inProgress = false;
 
     NavEvents.on('push', (route, routeProps, transition) => {
-      this.push(route, routeProps, transition || 'SlideFromRight');
+      this.push(route, routeProps, transition || 'PushFromRight');
     });
 
     NavEvents.on('pop', () => {
       this.pop();
     });
 
+    UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
+
   }
 
   push(route, _routeProps, _transition) {
-    if (!this.navScreens[route]) {
+    if (!this.navScreens[route] || this.inProgress) {
       return;
     }
+    this.inProgress = true;
+
     let routeProps = _routeProps || this.navScreens[route].props.routeProps;
     let transition = _transition || this.navScreens[route].props.transition;
     let newScreen = {
@@ -48,6 +55,9 @@ export default class NavProvider extends Component {
       this.setState({
         history: [newScreen],
         stage: 'initial',
+      });
+      requestAnimationFrame(() => {
+        this.inProgress = false;
       });
     }
     else {
@@ -62,15 +72,20 @@ export default class NavProvider extends Component {
         this.setState({
           stage: 'push',
         });
+        setTimeout(() => {
+          this.inProgress = false;
+        }, NavScreenTransitions[transition].animation.duration);
       });
     }
   }
 
 
   pop() {
-    if (this.state.history.length <= 1) {
+    if (this.state.history.length <= 1 || this.inProgress) {
       return false;
     }
+    this.inProgress = true;
+
     let currScreen = this.state.history[this.state.history.length - 1];
     let transition = currScreen.transition;
     this.setState({
@@ -90,6 +105,7 @@ export default class NavProvider extends Component {
         history: history,
         stage: 'popDone'
       });
+      this.inProgress = false;
     }, NavScreenTransitions[transition].animation.duration);
   }
 
@@ -122,16 +138,29 @@ export default class NavProvider extends Component {
     }
 
     let screens = [];
+    let screenSize = {
+      width: this.state.layout.width,
+      height: this.state.layout.height,
+    };
+
+    if (this.state.history.length >= 3) {
+      for (let i = 0; i < this.state.history.length - 2; i++) {
+        let historyItem = this.state.history[i];
+        screens.push(React.cloneElement(this.navScreens[historyItem.route], {
+          key: historyItem.route,
+          routeProps: historyItem.routeProps,
+          transition: false,
+          size: screenSize,
+        }));
+      }
+    }
+
     let index1 = Math.max(this.state.history.length - 2, 0);
     let index2 = Math.max(this.state.history.length - 1, 1);
     let screen1 = this.state.history[index1];
     let screen2 = this.state.history[index2] ? this.state.history[index2] : false;
 
     let transition = screen2 ? NavScreenTransitions[screen2.transition] : false;
-    let screenSize = {
-      width: this.state.layout.width,
-      height: this.state.layout.height,
-    };
 
     let screen1Transition = transition &&
       (this.state.stage === 'push' || this.state.stage === 'popStart') ? transition.screen1 : false;

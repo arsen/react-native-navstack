@@ -22,6 +22,7 @@ export default class NavScreen extends Component {
       PropTypes.shape({
         left: PropTypes.number,
         top: PropTypes.number,
+        bottom: PropTypes.number,
         opacity: PropTypes.number,
         scale: PropTypes.number,
       }),
@@ -36,10 +37,13 @@ export default class NavScreen extends Component {
     };
     if (this.props.transition) {
       if (this.props.transition.left) {
-        styles.left = this.props.size.width * this.props.transition.left;
+        styles.left = this.props.size.width * this.props.transition.left - 1;
       }
       if (this.props.transition.top) {
         styles.top = this.props.size.height * this.props.transition.top;
+      }
+      if (this.props.transition.bottom) {
+        styles.top = this.props.size.height * this.props.transition.bottom;
       }
       if (this.props.transition.opacity) {
         styles.opacity = this.props.transition.opacity;

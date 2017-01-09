@@ -1,5 +1,6 @@
 # react-native-navstack
-High performance navigation library for React Native, based on native animations (LayoutAnimation)
+High performance navigation library for React Native, based on native animations (LayoutAnimation).  
+iOS and Android supported.
 
 ## Install
 ```shell

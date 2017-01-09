@@ -42,10 +42,10 @@ SlideFromBottom
 All you screens must be wrapped into NavScreen component.  
 NavScreen has 3 public properties
 | Prop | Description | Default |
-|---|---|---|
-|**`route`**|Route key. Must be unique.  |Required| 
-|**`routeProps`**|Will be passed to the childs as properties |*None*| 
-|**`transition`**|Animation transition to use |*PushFromRight*| 
+| --- | --- | --- |
+| **`route`** | Route key. Must be unique.  | Required | 
+| **`routeProps`** | Will be passed to the childs as properties | *None* | 
+| **`transition`** | Animation transition to use | *PushFromRight* | 
 
 
 ## NavState reducer

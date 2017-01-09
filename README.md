@@ -39,7 +39,7 @@ SlideFromTop
 SlideFromBottom  
 
 ## NavScreen
-All you screens must be wrapped into NavScreen component.  
+All your screens must be wrapped into NavScreen component.  
 NavScreen has 3 public properties  
    
    

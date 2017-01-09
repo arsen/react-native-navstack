@@ -40,7 +40,9 @@ SlideFromBottom
 
 ## NavScreen
 All you screens must be wrapped into NavScreen component.  
-NavScreen has 3 public properties
+NavScreen has 3 public properties  
+   
+   
 | Prop | Description | Default |
 | --- | --- | --- |
 | **`route`** | Route key. Must be unique.  | Required | 

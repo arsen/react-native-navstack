@@ -1,12 +1,12 @@
 # react-native-navstack
 High performance navigation library for React Native, based on native animations (LayoutAnimation)
 
-# Install
+## Install
 ```shell
 npm install --save react-navstack
 ```
 
-# Example
+## Example
 ```js
 import { NavProvider, NavScreen, NavState } from 'react-native-navstack';
 
@@ -30,7 +30,7 @@ import { NavProvider, NavScreen, NavState } from 'react-native-navstack';
 
 </NavProvider>
 ```
-# Supported Transitions
+## Supported Transitions
 PushFromRight  
 PushFromTop  
 PushFromBottom  
@@ -38,7 +38,7 @@ SlideFromRight
 SlideFromTop  
 SlideFromBottom  
 
-# NavScreen
+## NavScreen
 All you screens must be wrapped into NavScreen component.  
 NavScreen has 3 public properties
 | Prop | Description | Default |
@@ -48,7 +48,7 @@ NavScreen has 3 public properties
 |**`transition`**|Animation transition to use |*PushFromRight*|
 
 
-# NavState reducer
+## NavState reducer
 NavState reducer has 2 public methods push and pop  
   
 NavState.push([ROUTE NAME], [ROUTE PROPS], [TRANSITION])  

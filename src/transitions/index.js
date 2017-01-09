@@ -1,6 +1,17 @@
+import PushFromRight from './PushFromRight';
+import PushFromTop from './PushFromTop';
+import PushFromBottom from './PushFromBottom';
+
 import SlideFromRight from './SlideFromRight';
+import SlideFromTop from './SlideFromTop';
+import SlideFromBottom from './SlideFromBottom';
 
 
 export default {
-  SlideFromRight
+  PushFromRight,
+  PushFromTop,
+  PushFromBottom,
+  SlideFromRight,
+  SlideFromTop,
+  SlideFromBottom,
 };

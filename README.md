@@ -1,6 +1,11 @@
 # react-native-navstack
 High performance navigation library for React Native, based on native animations (LayoutAnimation).  
-iOS and Android supported.
+iOS and Android supported.  
+  
+[![npm](https://img.shields.io/npm/v/react-native-navstack.svg)](https://www.npmjs.com/package/react-native-navstack)
+[![Dependency Status](https://david-dm.org/arsenghazaryan/react-native-navstack.svg)](https://david-dm.org/arsenghazaryan/react-native-navstack.svg)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/react-native-material-design/react-native-material-design/master/LICENSE)
+
 
 ## Install
 ```shell

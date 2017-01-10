@@ -3,14 +3,6 @@ import { LayoutAnimation } from 'react-native';
 export default {
   animation: {
     duration: 200,
-    // create: {
-    //   type: LayoutAnimation.Types.linear,
-    //   property: LayoutAnimation.Properties.opacity,
-    // },
-    // delete: {
-    //   type: LayoutAnimation.Types.linear,
-    //   property: LayoutAnimation.Properties.opacity,
-    // },
     update: {
       type: LayoutAnimation.Types.easeIn,
       springDamping: 0.7,

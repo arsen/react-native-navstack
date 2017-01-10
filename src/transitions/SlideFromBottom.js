@@ -1,8 +1,8 @@
-import { LayoutAnimation } from 'react-native';
+import { LayoutAnimation, Platform } from 'react-native';
 
 export default {
   animation: {
-    duration: 550,
+    duration: Platform.OS === 'ios' ? 600 : 700,
     update: {
       type: LayoutAnimation.Types.spring,
       springDamping: 0.7,

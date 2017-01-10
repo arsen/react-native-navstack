@@ -4,7 +4,7 @@ iOS and Android supported.
 
 ## Install
 ```shell
-npm install --save react-navstack
+npm install --save react-native-navstack
 ```
 
 ## Example
@@ -12,23 +12,18 @@ npm install --save react-navstack
 import { NavProvider, NavScreen, NavState } from 'react-native-navstack';
 
 <NavProvider>
-
   <NavScreen route="screen1" routeProps={{ someValue: 'cool' }} initial={true}>
     <Screen1 />
   </NavScreen>
-
   <NavScreen route="screen2">
     <Screen2 />
   </NavScreen>
-
   <NavScreen route="screen3">
     <Screen3 />
   </NavScreen>
-
   <NavScreen route="screen4">
     <Screen4 />
   </NavScreen>
-
 </NavProvider>
 ```
 ## Supported Transitions
@@ -46,8 +41,8 @@ NavScreen has 3 public properties
    
 | Prop | Description | Default |
 | --- | --- | --- |
-| **`route`** | Route key. Must be unique.  | Required | 
-| **`routeProps`** | Will be passed to the childs as properties | *None* | 
+| **`route`** | Route key. Must be unique.  | *Required* | 
+| **`routeProps`** | Will be passed to the children as properties {...routeProps}| *None* | 
 | **`transition`** | Animation transition to use | *PushFromRight* | 
 
 

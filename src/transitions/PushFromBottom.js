@@ -1,17 +1,49 @@
-import { LayoutAnimation } from 'react-native';
+import { Easing } from 'react-native';
 
 export default {
   animation: {
     duration: 250,
-    update: {
-      type: LayoutAnimation.Types.easeIn,
-      springDamping: 0.7,
-    },
+    easing: Easing.out(Easing.quad),
   },
-  screen1: {
-    top: -0.3,
+  gesture: 'top-to-bottom',
+  progressEnd: (layout) => {
+    return layout.height;
   },
-  screen2: {
-    top: 1,
+  screen1: (progress, layout) => {
+    return {
+      screen: {
+        transform: [
+          {
+            translateY: progress.interpolate({
+              inputRange: [0, layout.height],
+              outputRange: [0, 0]
+              // outputRange: [0, -1 * layout.height / 5]
+            })
+          }
+        ],
+      },
+      overlay: {
+        opacity: progress.interpolate({
+          inputRange: [0, layout.height],
+          outputRange: [0, 0.7]
+        })
+      }
+    };
+  },
+  screen2: (progress, layout) => {
+    return {
+      screen: {
+        transform: [
+          {
+            translateY: progress.interpolate({
+              inputRange: [0, layout.height],
+              outputRange: [layout.height, 0]
+            })
+          }
+        ],
+      },
+      overlay: {
+      }
+    };
   },
 };

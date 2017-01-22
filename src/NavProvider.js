@@ -3,192 +3,275 @@ import {
   View,
   Text,
   StyleSheet,
-  LayoutAnimation,
-  UIManager
+  Animated,
+  PanResponder,
 } from 'react-native';
 
-import NavEvents from './NavEvents';
-import NavScreen from './NavScreen';
-import NavScreenTransitions from './transitions';
 
-
+import NavTransitions from './transitions';
 
 export default class NavProvider extends Component {
+  static propTypes = {
+    initialRoute: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.func
+    ]).isRequired,
+    defaultTransition: PropTypes.string,
+  }
+
+  static defaultProps = {
+    defaultTransition: 'PushFromRight',
+  }
+
   constructor(props) {
     super(props);
-
     this.navScreens = {};
 
     this.state = {
       layout: false,
+      progress: new Animated.Value(0),
       history: [],
-      stage: '',
+      action: '',
     };
-    this.inProgress = false;
 
-    NavEvents.on('push', (route, routeProps, transition) => {
-      this.push(route, routeProps, transition || 'PushFromRight');
+    this.navstack = {
+      push: this.push.bind(this),
+      pop: this.pop.bind(this),
+    }
+
+    this.gestureProgress = null;
+    this.currentTransition = false;
+  }
+  push(data) {
+
+    let options = Object.assign({
+      transition: this.props.defaultTransition,
+      routeProps: {}
+    }, data);
+
+    let history = [...this.state.history];
+    this.currentTransition = NavTransitions[options.transition] || false;
+    let progressEnd = this.currentTransition ? this.currentTransition.progressEnd(this.state.layout) : 0;
+
+    if (this.currentTransition) {
+      if (history.length > 0) {
+        this.state.progress.setValue(0);
+      }
+      else {
+        this.state.progress.setValue(progressEnd)
+      }
+    }
+
+    history.push(options);
+    this.setState({
+      history,
+      action: 'push'
     });
 
-    NavEvents.on('pop', () => {
-      this.pop();
+    this.currentTransition && Animated.timing(this.state.progress, {
+      toValue: progressEnd,
+      duration: this.currentTransition.animation.duration,
+      easing: this.currentTransition.animation.easing
+    }).start(() => {
+      this.setState({
+        action: ''
+      });
     });
-
-    UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
-
   }
 
-  push(route, _routeProps, _transition) {
-    if (!this.navScreens[route] || this.inProgress) {
-      return;
-    }
-    this.inProgress = true;
-
-    let routeProps = _routeProps || this.navScreens[route].props.routeProps;
-    let transition = _transition || this.navScreens[route].props.transition;
-    let newScreen = {
-      route,
-      routeProps,
-      transition: this.state.history.length > 0 ? transition : false,
-    };
-    if (!newScreen.transition) {
-      this.setState({
-        history: [newScreen],
-        stage: 'initial',
-      });
-      requestAnimationFrame(() => {
-        this.inProgress = false;
-      });
-    }
-    else {
-      let history = [...this.state.history, newScreen];
-      this.setState({
-        history,
-        stage: 'pushStart',
-      });
-      requestAnimationFrame(() => {
-        NavScreenTransitions[transition] &&
-          LayoutAnimation.configureNext(NavScreenTransitions[transition].animation);
-        this.setState({
-          stage: 'push',
-        });
-        setTimeout(() => {
-          this.inProgress = false;
-        }, NavScreenTransitions[transition].animation.duration);
-      });
-    }
-  }
-
-
-  pop() {
-    if (this.state.history.length <= 1 || this.inProgress) {
+  pop(gestureData) {
+    if (this.state.history.length <= 1) {
       return false;
     }
-    this.inProgress = true;
 
-    let currScreen = this.state.history[this.state.history.length - 1];
-    let transition = currScreen.transition;
-    this.setState({
-      stage: 'popStart'
-    });
-    requestAnimationFrame(() => {
-      NavScreenTransitions[transition] &&
-        LayoutAnimation.configureNext(NavScreenTransitions[transition].animation);
-      this.setState({
-        stage: 'pop'
-      });
-    });
-    setTimeout(() => {
-      let history = [...this.state.history];
+    let history = [...this.state.history];
+    let options = history[history.length - 1];
+    let transition = NavTransitions[options.transition] || false;
+    let progressEnd = transition ? transition.progressEnd(this.state.layout) : 0;
+
+    transition && !gestureData && this.state.progress.setValue(progressEnd);
+
+    this.setState({ action: 'pop' });
+
+    let duration = transition.animation.duration;
+    if (gestureData) {
+      duration = Math.min((progressEnd - this.state.progress.__getValue()) / gestureData.speed, duration);
+    }
+
+    transition && Animated.timing(this.state.progress, {
+      toValue: 0,
+      duration: duration,
+      easing: transition.animation.easing
+    }).start(() => {
+      this.gestureProgress = null;
       history.pop();
+
+      options = history[history.length - 1];
+      transition = NavTransitions[options.transition] || false;
+      progressEnd = transition ? transition.progressEnd(this.state.layout) : 0;
+      transition && this.state.progress.setValue(progressEnd);
+      this.currentTransition = transition;
+
       this.setState({
-        history: history,
-        stage: 'popDone'
+        action: '',
+        history,
       });
-      this.inProgress = false;
-    }, NavScreenTransitions[transition].animation.duration);
+    });
   }
 
-  componentDidMount() {
-    let initialRoute;
-    React.Children.map(this.props.children,
-      (child) => {
-        if (child && child.props && child.props.route) {
-          if (child.props.initial) {
-            initialRoute = child.props.route;
-          }
-          this.navScreens[child.props.route] = child;
-        }
-      }
-    );
-    if (initialRoute) {
-      this.push(initialRoute);
-    }
+  resetGesture() {
+    let progressEnd = this.currentTransition.progressEnd(this.state.layout);
+    Animated.timing(this.state.progress, {
+      toValue: progressEnd,
+      duration: this.currentTransition.animation.duration,
+      easing: this.currentTransition.animation.easing
+    }).start();
   }
 
   onLayout(event) {
-    this.setState({
-      layout: event.nativeEvent.layout
+    let layout = {
+      width: event.nativeEvent.layout.width,
+      height: event.nativeEvent.layout.height,
+    }
+    this.setState({ layout });
+  }
+
+  getInitialRoute() {
+    if (typeof this.props.initialRoute === 'string') {
+      return this.props.initialRoute;
+    }
+    else {
+      return this.props.initialRoute();
+    }
+  }
+
+  componentWillMount() {
+    React.Children.map(this.props.children, (child) => {
+      this.navScreens[child.props.route] = child;
+    });
+
+    this.push({
+      route: this.getInitialRoute(),
+      routeProps: {},
+      transition: false
+    })
+
+    this._panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: (evt, gestureState) => false,
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => false,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        if (this.currentTransition.gesture === 'left-to-right' && gestureState.moveX <= 50 && gestureState.dy <= 20) {
+          return true;
+        }
+        if (this.currentTransition.gesture === 'top-to-bottom' && gestureState.moveY <= 50 && gestureState.dx <= 20) {
+          return true;
+        }
+        return false;
+      },
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => false,
+
+      onPanResponderGrant: (evt, gestureState) => {
+        this.gestureProgress = this.state.progress.__getValue();
+        this.gestureProgressEnd = this.currentTransition.progressEnd(this.state.layout);
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        if (this.currentTransition.gesture === 'left-to-right' &&
+          gestureState.dx > 0 &&
+          gestureState.dx <= this.gestureProgressEnd) {
+          this.state.progress.setValue(this.gestureProgress - gestureState.dx);
+        }
+        if (this.currentTransition.gesture === 'top-to-bottom' &&
+          gestureState.dy > 0 &&
+          gestureState.dy <= this.gestureProgressEnd) {
+          this.state.progress.setValue(this.gestureProgress - gestureState.dy);
+        }
+      },
+      onPanResponderTerminationRequest: (evt, gestureState) => true,
+      onPanResponderRelease: (evt, gestureState) => {
+        console.log('speed', gestureState.vx);
+        if (this.currentTransition.gesture === 'left-to-right' &&
+          (gestureState.dx >= 100 || gestureState.vx >= 0.3)) {
+          let gestureData = {
+            speed: gestureState.vx
+          }
+          this.pop(gestureData);
+        }
+        else if (this.currentTransition.gesture === 'top-to-bottom' &&
+          (gestureState.dy >= 100 || gestureState.vy >= 0.3)) {
+          let gestureData = {
+            speed: gestureState.vy
+          }
+          this.pop(gestureData);
+        }
+        else {
+          this.resetGesture();
+        }
+      },
+      onPanResponderTerminate: (evt, gestureState) => {
+        // console.log('onPanResponderTerminate');
+        // Another component has become the responder, so this gesture
+        // should be cancelled
+      },
     });
   }
 
+  getScreenTransition(transition) {
+    return transition ? {
+      screen: transition.screen(this.state.progress, this.state.layout),
+      overlay: transition.overlay(this.state.progress, this.state.layout)
+    } : false;
+  }
+
   getScreens() {
-    if (this.state.history.length === 0 || !this.state.layout) {
+    let screens = [];
+    let { history, action } = this.state;
+    if (history.length === 0 || !this.state.layout) {
       return null;
     }
 
-    let screens = [];
-    let screenSize = {
-      width: this.state.layout.width,
-      height: this.state.layout.height,
-    };
+    let screen1Route, screen2Route, transition;
+    if (history.length === 1) {
+      screen1Route = history[history.length - 1];
+      transition = NavTransitions[screen1Route.transition] || false;
+    }
+    else if (history.length >= 2) {
+      screen1Route = history[history.length - 2];
+      screen2Route = history[history.length - 1];
+      transition = NavTransitions[screen2Route.transition] || false;
+    }
 
-    if (this.state.history.length >= 3) {
-      for (let i = 0; i < this.state.history.length - 2; i++) {
-        let historyItem = this.state.history[i];
-        screens.push(React.cloneElement(this.navScreens[historyItem.route], {
-          key: historyItem.route,
-          routeProps: historyItem.routeProps,
-          transition: false,
-          size: screenSize,
-        }));
+
+    for (let i = 0; i < history.length; i++) {
+      let options = history[i];
+      let props = {
+        key: 'route-' + options.route,
+        routeProps: options.routeProps,
+        navstack: this.navstack,
+      };
+      if (screen1Route && screen1Route.route == history[i].route) {
+        props.active = true;
+        if (transition) {
+          props.transition = transition.screen1(this.state.progress, this.state.layout);
+        }
       }
+      if (screen2Route && screen2Route.route == history[i].route) {
+        props.active = true;
+        if (transition) {
+          props.transition = transition.screen2(this.state.progress, this.state.layout);
+        }
+      }
+
+      let screen = React.cloneElement(this.navScreens[options.route], props);
+      screens.push(screen);
     }
-
-    let index1 = Math.max(this.state.history.length - 2, 0);
-    let index2 = Math.max(this.state.history.length - 1, 1);
-    let screen1 = this.state.history[index1];
-    let screen2 = this.state.history[index2] ? this.state.history[index2] : false;
-
-    let transition = screen2 ? NavScreenTransitions[screen2.transition] : false;
-
-    let screen1Transition = transition &&
-      (this.state.stage === 'push' || this.state.stage === 'popStart') ? transition.screen1 : false;
-    screens.push(React.cloneElement(this.navScreens[screen1.route], {
-      key: screen1.route,
-      routeProps: screen1.routeProps,
-      transition: screen1Transition,
-      size: screenSize,
-    }));
-
-    if (screen2) {
-      let screen2Transition = transition &&
-        (this.state.stage === 'pushStart' || this.state.stage === 'pop') ? transition.screen2 : false;
-      screens.push(React.cloneElement(this.navScreens[screen2.route], {
-        key: screen2.route,
-        routeProps: screen2.routeProps,
-        transition: screen2Transition,
-        size: screenSize,
-      }));
-    }
-
     return screens;
   }
 
 
+
   render() {
     return (
-      <View style={styles.provider} onLayout={this.onLayout.bind(this)}>
+      <View style={styles.provider} onLayout={this.onLayout.bind(this)} {...this._panResponder.panHandlers}>
         {this.getScreens()}
       </View>
     );
@@ -198,13 +281,19 @@ export default class NavProvider extends Component {
 
 const styles = StyleSheet.create({
   provider: {
-    // borderWidth: 2,
-    // borderColor: 'blue',
     position: 'absolute',
     overflow: 'hidden',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0
+  },
+  cover: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   }
 });

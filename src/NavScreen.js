@@ -42,12 +42,8 @@ export default class NavScreen extends Component {
       }
     );
 
-    let activeStyle = {
-      opacity: this.props.active ? 1 : 0
-    };
-
     return (
-      <Animated.View style={[styles.screen, this.getStyles(), activeStyle]}>
+      <Animated.View style={[styles.screen, this.getStyles()]}>
         {childrenWithProps}
         <Animated.View style={[styles.fade, this.getFadeStyles()]} pointerEvents="none" />
       </Animated.View>

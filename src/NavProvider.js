@@ -93,30 +93,40 @@ export default class NavProvider extends Component {
 
     this.setState({ action: 'pop' });
 
-    let duration = transition.animation.duration;
+    let duration = transition ? transition.animation.duration : 0;
     if (gestureData) {
       duration = Math.min((progressEnd - this.state.progress.__getValue()) / gestureData.speed, duration);
     }
 
-    transition && Animated.timing(this.state.progress, {
-      toValue: 0,
-      duration: duration,
-      easing: transition.animation.easing
-    }).start(() => {
-      this.gestureProgress = null;
+    if (transition) {
+      Animated.timing(this.state.progress, {
+        toValue: 0,
+        duration: duration,
+        easing: transition.animation.easing
+      }).start(() => {
+        this.gestureProgress = null;
+        history.pop();
+
+        options = history[history.length - 1];
+        transition = NavTransitions[options.transition] || false;
+        progressEnd = transition ? transition.progressEnd(this.state.layout) : 0;
+        transition && this.state.progress.setValue(progressEnd);
+        this.currentTransition = transition;
+
+        this.setState({
+          action: '',
+          history,
+        });
+      });
+    }
+    else {
       history.pop();
-
-      options = history[history.length - 1];
-      transition = NavTransitions[options.transition] || false;
-      progressEnd = transition ? transition.progressEnd(this.state.layout) : 0;
-      transition && this.state.progress.setValue(progressEnd);
-      this.currentTransition = transition;
-
+      this.state.progress.setValue(0);
       this.setState({
         action: '',
         history,
       });
-    });
+    }
   }
 
   resetGesture() {
